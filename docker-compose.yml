@@ -1,61 +1,198 @@
 version: '2.4'
+#https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+#https://www.elastic.co/guide/en/elasticsearch/reference/current/configuring-tls-docker.html
 services:
   es01:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
-    container_name: ${CONTAINER_ROOT_NAME}01
+    container_name: ${COMPOSE_PROJECT_NAME}_es01
     environment:
-      - node.name=${CONTAINER_ROOT_NAME}01
-      - cluster.name=${CLUSTER_NAME}
-      - discovery.seed_hosts=${CONTAINER_ROOT_NAME}02,${CONTAINER_ROOT_NAME}03
-      - cluster.initial_master_nodes=${CONTAINER_ROOT_NAME}01,${CONTAINER_ROOT_NAME}02,${CONTAINER_ROOT_NAME}03
+      - node.name=es01
+      - cluster.name=${ES_CLUSTER_NAME}
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
+      - http.cors.enabled=true
+      #- http.cors.allow-origin=http://localhost:1358,http://127.0.0.1:1358
+      - http.cors.allow-origin=*
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - http.cors.allow-credentials=true
+      - xpack.monitoring.collection.enabled=true
+      #- xpack.monitoring.elasticsearch.collection.enabled=false
+      - xpack.license.self_generated.type=${ES_XPACK_LICENCE}
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD 
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
+      - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.http.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate 
+      - xpack.security.transport.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.transport.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.key=$CERTS_DIR/es01/es01.key
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
       - data01:/usr/share/elasticsearch/data
+      - certs:$CERTS_DIR
     ports:
       - 127.0.0.1:9200:9200
     networks:
       - elastic
+    restart: unless-stopped
+    healthcheck:
+      test: curl --cacert $CERTS_DIR/ca/ca.crt -s https://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   es02:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
-    container_name: ${CONTAINER_ROOT_NAME}02
+    container_name: ${COMPOSE_PROJECT_NAME}_es02
     environment:
-      - node.name=${CONTAINER_ROOT_NAME}02
-      - cluster.name=${CLUSTER_NAME}
-      - discovery.seed_hosts=${CONTAINER_ROOT_NAME}01,${CONTAINER_ROOT_NAME}03
-      - cluster.initial_master_nodes=${CONTAINER_ROOT_NAME}01,${CONTAINER_ROOT_NAME}02,${CONTAINER_ROOT_NAME}03
+      - node.name=es02
+      - cluster.name=${ES_CLUSTER_NAME}
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
+      - xpack.monitoring.collection.enabled=true
+      #- xpack.monitoring.elasticsearch.collection.enabled=false
+      - xpack.license.self_generated.type=${ES_XPACK_LICENCE}
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD 
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
+      - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.http.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate 
+      - xpack.security.transport.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.transport.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.key=$CERTS_DIR/es01/es01.key
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
       - data02:/usr/share/elasticsearch/data
+      - certs:$CERTS_DIR
     networks:
       - elastic
+    restart: unless-stopped
+
   es03:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
-    container_name: ${CONTAINER_ROOT_NAME}03
+    container_name: ${COMPOSE_PROJECT_NAME}_es03
     environment:
-      - node.name=${CONTAINER_ROOT_NAME}03
-      - cluster.name=${CLUSTER_NAME}
-      - discovery.seed_hosts=${CONTAINER_ROOT_NAME}01,${CONTAINER_ROOT_NAME}02
-      - cluster.initial_master_nodes=${CONTAINER_ROOT_NAME}01,${CONTAINER_ROOT_NAME}02,${CONTAINER_ROOT_NAME}03
+      - node.name=es03
+      - cluster.name=${ES_CLUSTER_NAME}
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
+      - xpack.monitoring.collection.enabled=true
+      #- xpack.monitoring.elasticsearch.collection.enabled=false
+      - xpack.license.self_generated.type=${ES_XPACK_LICENCE}
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD 
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
+      - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.http.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate 
+      - xpack.security.transport.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.transport.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.key=$CERTS_DIR/es01/es01.key
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
       - data03:/usr/share/elasticsearch/data
+      - certs:$CERTS_DIR
     networks:
       - elastic
+    restart: unless-stopped
+
+  # wait_until_ready:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
+  #   command: /usr/bin/true
+  #   depends_on: {"es01": {"condition": "service_healthy"}}
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_VERSION}
+    container_name: ${COMPOSE_PROJECT_NAME}_kibana
+    volumes:
+      - type: bind
+        source: ./kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    ports:
+      - "5601:5601"
+    networks:
+      - elastic
+    depends_on:
+      - es01
+    restart: unless-stopped
+
+  # eshead:
+  #   image: marlic/elasticsearch-head
+  #   container_name: ${COMPOSE_PROJECT_NAME}_head
+  #   ports:
+  #     - 127.0.0.1:9100:80
+  #   networks:
+  #     - elastic
+  #   depends_on:
+  #     - es01
+  #   restart: unless-stopped
+
+  # esdejavu:
+  #   image: appbaseio/dejavu
+  #   container_name: ${COMPOSE_PROJECT_NAME}_dejavu
+  #   ports:
+  #     - 127.0.0.1:1358:1358
+  #   networks:
+  #     - elastic
+  #   depends_on:
+  #     - es01
+
+  # escerebro:
+  #   image: lmenezes/cerebro
+  #   container_name: ${COMPOSE_PROJECT_NAME}_cerebro
+  #   ports:
+  #     - 127.0.0.1:9400:9000
+  #   networks:
+  #     - elastic
+  #   depends_on:
+  #     - es01
+
+  # eshq:
+  #   image: elastichq/elasticsearch-hq
+  #   container_name: ${COMPOSE_PROJECT_NAME}_hq
+  #   ports:
+  #     - 127.0.0.1:5001:5000
+  #   networks:
+  #     - elastic
+  #   depends_on:
+  #     - es01
+
+  # elasticvue:
+  #   image: cars10/elasticvue
+  #   container_name: ${COMPOSE_PROJECT_NAME}_elasticvue
+  #   ports:
+  #     - 127.0.0.1:8082:8080
+  #   networks:
+  #     - elastic
+  #   depends_on:
+  #     - es01 
 
 volumes:
   data01:
@@ -64,8 +201,12 @@ volumes:
     driver: local
   data03:
     driver: local
+  certs:
+    driver: local
 
 networks:
   elastic:
+    name: ${COMPOSE_PROJECT_NAME}
     driver: bridge
 
+#https://hub.docker.com/r/blacktop/elasticsearch
