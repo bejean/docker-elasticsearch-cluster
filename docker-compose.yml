@@ -4,7 +4,7 @@ version: '2.4'
 services:
   es01:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
-    container_name: ${COMPOSE_PROJECT_NAME}_es01
+    container_name: ${COMPOSE_PROJECT_NAME}_elastic_es01
     environment:
       - node.name=es01
       - cluster.name=${ES_CLUSTER_NAME}
@@ -37,8 +37,8 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - data01:/usr/share/elasticsearch/data
-      - certs:$CERTS_DIR
+      - elastic_data01:/usr/share/elasticsearch/data
+      - elastic_certs:$CERTS_DIR
     ports:
       - 127.0.0.1:9200:9200
     networks:
@@ -52,7 +52,7 @@ services:
 
   es02:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
-    container_name: ${COMPOSE_PROJECT_NAME}_es02
+    container_name: ${COMPOSE_PROJECT_NAME}_elastic_es02
     environment:
       - node.name=es02
       - cluster.name=${ES_CLUSTER_NAME}
@@ -80,15 +80,15 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - data02:/usr/share/elasticsearch/data
-      - certs:$CERTS_DIR
+      - elastic_data02:/usr/share/elasticsearch/data
+      - elastic_certs:$CERTS_DIR
     networks:
       - elastic
     restart: unless-stopped
 
   es03:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
-    container_name: ${COMPOSE_PROJECT_NAME}_es03
+    container_name: ${COMPOSE_PROJECT_NAME}_elastic_es03
     environment:
       - node.name=es03
       - cluster.name=${ES_CLUSTER_NAME}
@@ -116,8 +116,8 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - data03:/usr/share/elasticsearch/data
-      - certs:$CERTS_DIR
+      - elastic_data03:/usr/share/elasticsearch/data
+      - elastic_certs:$CERTS_DIR
     networks:
       - elastic
     restart: unless-stopped
@@ -129,12 +129,10 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:${ES_VERSION}
-    container_name: ${COMPOSE_PROJECT_NAME}_kibana
+    container_name: ${COMPOSE_PROJECT_NAME}_elastic_kibana
     volumes:
-      - type: bind
-        source: ./kibana/config/kibana.yml
-        target: /usr/share/kibana/config/kibana.yml
-        read_only: true
+      - elastic_certs:/usr/share/kibana/config/certs
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml
     ports:
       - "5601:5601"
     networks:
@@ -195,18 +193,18 @@ services:
   #     - es01 
 
 volumes:
-  data01:
+  elastic_data01:
     driver: local
-  data02:
+  elastic_data02:
     driver: local
-  data03:
+  elastic_data03:
     driver: local
-  certs:
+  elastic_certs:
     driver: local
 
 networks:
   elastic:
-    name: ${COMPOSE_PROJECT_NAME}
+    name: ${COMPOSE_PROJECT_NAME}_elastic
     driver: bridge
 
 #https://hub.docker.com/r/blacktop/elasticsearch

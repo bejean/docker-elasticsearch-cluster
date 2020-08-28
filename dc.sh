@@ -1,12 +1,12 @@
 #!/bin/bash
 usage(){
     echo ""
-    echo "Usage : $0 -a action -e env_file";
+    echo "Usage : $0 -a action -p project_name";
     echo ""
-    echo "    -a action     : up | down | create_certs";
-    echo "    -e env_file   : envirronment file to be rename in .env";
+    echo "    -a action         : up | stop | down | clean | create_certs";
+    echo "    -p project_name   : project_name in order to be create relevant .env file";
     echo ""
-    echo "  Example : $0 -a up -e minnie"
+    echo "  Example : $0 -a up -p minnie"
     echo ""
     exit 1
 }
@@ -21,13 +21,13 @@ if [ "$1" == "-h" ] ; then
 fi
 
 export ACTION=
-export ENV_FILE=
+export PROJECT=
 
 if [ $# -gt 1 ]; then
-    while getopts ":a:e:" opt; do
+    while getopts ":a:p:" opt; do
         case $opt in
             a) export ACTION=$OPTARG ;;
-            e) export ENV_FILE=$OPTARG ;;
+            p) export PROJECT=$OPTARG ;;
             *) usage "$1: unknown option" ;;
         esac
     done
@@ -38,31 +38,48 @@ if [ -z "$ACTION" ] ; then
     usage
 fi
 
-if [ -z "$ENV_FILE" ] ; then
-    echo "ERROR : Missing parameter : -e env_file"
+if [[ ! "$ACTION" =~ ^(up|stop|down|clean|create_certs)$ ]]; then
+    echo "EROR: Unknown action!"
     usage
 fi
 
-if [ ! -f "env/$ENV_FILE" ]; then
-    echo "env/$ENV_FILE not found"
+if [ -z "$PROJECT" ] ; then
+    echo "ERROR : Missing parameter : -p project_name"
     usage
 fi
 
-cp env/$ENV_FILE .env
+if [ ! -f "env/$PROJECT" ]; then
+    echo "env/$PROJECT not found"
+    usage
+fi
+
+cp env/$PROJECT .env
 
 history "$*"
 
 if [ "$ACTION" == "up" ] ; then 
-    docker-compose up -d --build
-    exit 0
+    if [ -f "docker-compose.${PROJECT}.yml" ] ; then 
+        docker-compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml up -d --build
+    else
+        docker-compose up -d --build
+    fi
+fi
+
+if [ "$ACTION" == "stop" ] ; then 
+    docker-compose stop
 fi
 
 if [ "$ACTION" == "down" ] ; then 
     docker-compose down
-    exit 0
+fi
+
+if [ "$ACTION" == "clean" ] ; then 
+    docker-compose rm -v
+    docker-compose down
 fi
 
 if [ "$ACTION" == "create_certs" ] ; then 
     docker-compose -f create-certs.yml run --rm create_certs
-    exit 0
 fi
+
+rm .env
