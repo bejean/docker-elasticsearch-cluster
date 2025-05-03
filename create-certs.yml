@@ -1,19 +1,18 @@
-version: '2.4'
-
 services:
   create_certs:
     container_name: create_certs
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
+    environment:
+      - CERTS_DIR=${CERTS_DIR}
     command: >
       bash -c '
-        if [[ ! -f /certs/bundle.zip ]]; then
-          bin/elasticsearch-certutil cert --silent --pem --in config/certificates/instances.yml -out /certs/bundle.zip;
-          unzip /certs/bundle.zip -d /certs; 
-        fi;
-        chown -R 1000:0 /certs
+        /tmp/create-certs.sh
       '
     user: "0"
     working_dir: /usr/share/elasticsearch
-    volumes: ['elastic_certs:/certs', '.:/usr/share/elasticsearch/config/certificates']
+    volumes: 
+      - ./create-certs.sh:/tmp/create-certs.sh
+      - ./instances.yml:/tmp/instances.yml 
+      - ./certs:$CERTS_DIR
 
-volumes: {"elastic_certs"}
+#volumes: {"elastic_certs"}

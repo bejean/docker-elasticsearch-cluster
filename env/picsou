@@ -1,9 +1,0 @@
-COMPOSE_PROJECT_NAME=picsou
-ES_CLUSTER_NAME=picsou
-ES_VERSION=7.8.1
-ES_XPACK_LICENCE=basic
-ES_JAVA_OPTS=-Xms512m -Xmx512m -Duser.timezone=Europe/Paris
-CERTS_DIR=/usr/share/elasticsearch/config/certificates 
-ELASTIC_PASSWORD=elastic 
-
-# 

@@ -3,7 +3,7 @@ usage(){
     echo ""
     echo "Usage : $0 -a action -p project_name";
     echo ""
-    echo "    -a action         : up | stop | down | clean | create_certs";
+    echo "    -a action         : up | stop | down | clean | init | logs | build";
     echo "    -p project_name   : project_name in order to be create relevant .env file";
     echo ""
     echo "  Example : $0 -a up -p minnie"
@@ -38,7 +38,7 @@ if [ -z "$ACTION" ] ; then
     usage
 fi
 
-if [[ ! "$ACTION" =~ ^(up|stop|down|clean|create_certs)$ ]]; then
+if [[ ! "$ACTION" =~ ^(up|stop|down|clean|init|logs|build)$ ]]; then
     echo "EROR: Unknown action!"
     usage
 fi
@@ -55,31 +55,60 @@ fi
 
 cp env/$PROJECT .env
 
-history "$*"
+#history "$*"
 
 if [ "$ACTION" == "up" ] ; then 
     if [ -f "docker-compose.${PROJECT}.yml" ] ; then 
-        docker-compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml up -d --build
+        docker compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml up -d --build
     else
-        docker-compose up -d --build
+        docker compose up -d --build
+    fi
+fi
+
+if [ "$ACTION" == "build" ] ; then 
+    if [ -f "docker-compose.${PROJECT}.yml" ] ; then 
+        docker compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml build
+    else
+        docker compose build
     fi
 fi
 
 if [ "$ACTION" == "stop" ] ; then 
-    docker-compose stop
+    if [ -f "docker-compose.${PROJECT}.yml" ] ; then 
+        docker compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml stop
+    else
+        docker compose stop
+    fi
 fi
 
 if [ "$ACTION" == "down" ] ; then 
-    docker-compose down
+    if [ -f "docker-compose.${PROJECT}.yml" ] ; then 
+        docker compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml down
+    else
+        docker compose down
+    fi
+fi
+
+if [ "$ACTION" == "logs" ] ; then 
+    if [ -f "docker-compose.${PROJECT}.yml" ] ; then 
+        docker compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml logs -f
+    else
+        docker compose logs -f
+    fi
 fi
 
 if [ "$ACTION" == "clean" ] ; then 
-    docker-compose rm -v
-    docker-compose down
+    if [ -f "docker-compose.${PROJECT}.yml" ] ; then 
+        docker compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml rm -v
+        docker compose -f docker-compose.yml -f docker-compose.${PROJECT}.yml down -v
+    else
+        docker compose rm -v
+        docker compose down -v
+    fi
 fi
 
-if [ "$ACTION" == "create_certs" ] ; then 
-    docker-compose -f create-certs.yml run --rm create_certs
+if [ "$ACTION" == "init" ] ; then 
+    docker compose -f create-certs.yml run --rm create_certs
 fi
 
 rm .env

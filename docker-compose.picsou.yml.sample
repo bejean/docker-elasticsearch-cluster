@@ -1,38 +1,35 @@
-version: '2.4'
 services:
   es04:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
     container_name: ${COMPOSE_PROJECT_NAME}_elastic_es04
     environment:
       - node.name=es04
-      #- node.roles=[ "data" ]
+      - node.roles=[ "ml" ]
       - cluster.name=${ES_CLUSTER_NAME}
-      - discovery.seed_hosts=es01,es02,es3
-      - cluster.initial_master_nodes=es01,es02,es03
+      - discovery.seed_hosts=es01
+      - cluster.initial_master_nodes=es01
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
-      - xpack.monitoring.collection.enabled=true
-      #- xpack.monitoring.elasticsearch.collection.enabled=false
+      - ES_JAVA_OPTS=${ES_JAVA_OPTS}
       - xpack.license.self_generated.type=${ES_XPACK_LICENCE}
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
       - ELASTIC_PASSWORD=$ELASTIC_PASSWORD 
       - xpack.security.http.ssl.enabled=true
-      - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
       - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
-      - xpack.security.http.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.http.ssl.key=$CERTS_DIR/es/es.key
+      - xpack.security.http.ssl.certificate=$CERTS_DIR/es/es.crt
       - xpack.security.transport.ssl.enabled=true
       - xpack.security.transport.ssl.verification_mode=certificate 
       - xpack.security.transport.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
-      - xpack.security.transport.ssl.certificate=$CERTS_DIR/es01/es01.crt
-      - xpack.security.transport.ssl.key=$CERTS_DIR/es01/es01.key
+      - xpack.security.transport.ssl.key=$CERTS_DIR/es/es.key
+      - xpack.security.transport.ssl.certificate=$CERTS_DIR/es/es.crt
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
       - elastic_data04:/usr/share/elasticsearch/data
-      - elastic_certs:$CERTS_DIR
+      - ./certs:$CERTS_DIR
     networks:
       - elastic
     restart: unless-stopped

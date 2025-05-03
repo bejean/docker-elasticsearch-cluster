@@ -1,0 +1,12 @@
+COMPOSE_PROJECT_NAME=sample9
+ES_CLUSTER_NAME=sample9
+ES_VERSION=9.0.0
+ES_XPACK_LICENCE=basic
+ES_JAVA_OPTS=-Xms512m -Xmx512m -Duser.timezone=Europe/Paris
+CERTS_DIR=/usr/share/elasticsearch/config/certs 
+ELASTIC_PASSWORD=elastic 
+
+KIBANA_ELASTIC_USER=kibana_system
+KIBANA_ELASTIC_PASSWORD=elastic 
+KIBANA_CERTS_DIR=/usr/share/kibana/config/certs
+
