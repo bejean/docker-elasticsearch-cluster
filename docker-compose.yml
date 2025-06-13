@@ -26,7 +26,6 @@ services:
       - xpack.security.transport.ssl.certificate=$CERTS_DIR/es/es.crt
       #- xpack.security.autoconfiguration.enabled= false
       #- xpack.security.enrollment.enabled= false
-
     ulimits:
       memlock:
         soft: -1
@@ -41,9 +40,9 @@ services:
     restart: unless-stopped
     healthcheck:
       test: curl --cacert $CERTS_DIR/ca/ca.crt -s https://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 30
 
   es02:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
@@ -81,12 +80,41 @@ services:
       - elastic
     restart: unless-stopped
 
-  # wait_until_ready:
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
-  #   command: /usr/bin/true
-  #   depends_on: {"es01": {"condition": "service_healthy"}}
+  kibana_settings:
+    depends_on:
+      es01:
+        condition: service_healthy
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
+    container_name: ${COMPOSE_PROJECT_NAME}_kibana_settings
+    restart: 'no'
+    volumes:
+      - ./certs:/tmp/certs
+    environment:
+      ELASTIC_PASSWORD: $ELASTIC_PASSWORD 
+      KIBANA_ELASTIC_USER: $KIBANA_ELASTIC_USER 
+      KIBANA_ELASTIC_PASSWORD: $KIBANA_ELASTIC_PASSWORD 
+    networks:
+      - elastic
+    command: >
+      bash -c '
+        echo "Setup the kibana_system password";
+        start_time=$$(date +%s);
+        timeout=120;
+        until curl --cacert /tmp/certs/ca/ca.crt -s -u "elastic:${ELASTIC_PASSWORD}" -X POST "https://es01:9200/_security/user/${KIBANA_ELASTIC_USER}/_password" -d "{\"password\":\"${KIBANA_ELASTIC_PASSWORD}\"}" -H "Content-Type: application/json" | grep -q "^{}"; do
+          if [ $$(($$(date +%s) - $$start_time)) -ge $$timeout ]; then
+            echo "Error: Elasticsearch timeout";
+            exit 1;
+          fi;
+          sleep 2;
+        done;
+      '
 
   kibana:
+    depends_on:
+      es01:
+        condition: service_healthy
+      kibana_settings:
+        condition: service_completed_successfully
     image: docker.elastic.co/kibana/kibana:${ES_VERSION}
     container_name: ${COMPOSE_PROJECT_NAME}_elastic_kibana
     environment:
@@ -94,7 +122,7 @@ services:
       SERVER_HOST: 0.0.0.0
       ELASTICSEARCH_HOSTS: '["https://es01:9200"]'
       ELASTICSEARCH_SSL_VERIFICATIONMODE: none
-      ELASTICSEARCH_USERNAME: $KIBANA_ELASTIC_USER 
+      ELASTICSEARCH_USERNAME: kibana_system 
       ELASTICSEARCH_PASSWORD: $KIBANA_ELASTIC_PASSWORD 
       SERVER_SSL_ENABLED: true
       SERVER_SSL_CERTIFICATE: $KIBANA_CERTS_DIR/kibana/kibana.crt
@@ -110,8 +138,6 @@ services:
       - "5601:5601"
     networks:
       - elastic
-    depends_on:
-      - es01
     restart: unless-stopped
 
 volumes:

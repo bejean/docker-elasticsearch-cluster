@@ -43,15 +43,13 @@ docker exec ... wrapper script
 	  Example : ./de.sh -c picsou_elastic_es01 -u elasticsearch
 
 
-## elasticsearch version consideration
+## elasticsearch version settings considerations
 
 ### for version 7 
 KIBANA_ELASTIC_USER=elastic
 
 ### for version 8+ 
 KIBANA_ELASTIC_USER=kibana_system
-
-And just after first stack startup, set kibana_system user password to value of KIBANA_ELASTIC_PASSWORD (see below)
 
 
 ## First startup
@@ -64,10 +62,6 @@ $ ./dc.sh -a init -p <env>
 ### Start
 $ ./dc.sh -a up -p <env>
 
-### Version 8+ only : Set kibana_system user password
-use password configured in KIBANA_ELASTIC_PASSWORD variable
-
-$ docker exec -it <env>_elastic_es01 ./bin/elasticsearch-reset-password -i -u kibana_system --url https://es01:9200
 
 
 

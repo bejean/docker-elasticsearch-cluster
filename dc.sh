@@ -111,4 +111,4 @@ if [ "$ACTION" == "init" ] ; then
     docker compose -f create-certs.yml run --rm create_certs
 fi
 
-rm .env
+rm -f .env
