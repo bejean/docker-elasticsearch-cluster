@@ -3,7 +3,7 @@ services:
     container_name: create_certs
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
     environment:
-      - CERTS_DIR=${CERTS_DIR}
+      - CERTS_DIR=/usr/share/elasticsearch/config/certs
     command: >
       bash -c '
         /tmp/create-certs.sh
@@ -13,6 +13,6 @@ services:
     volumes: 
       - ./create-certs.sh:/tmp/create-certs.sh
       - ./instances.yml:/tmp/instances.yml 
-      - ./certs:$CERTS_DIR
+      - ./certs:/usr/share/elasticsearch/config/certs
 
 #volumes: {"elastic_certs"}

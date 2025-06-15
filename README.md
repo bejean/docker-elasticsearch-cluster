@@ -4,7 +4,7 @@ Allows running several Docker Stack based on COMPOSE_PROJECT_NAME.
 One Docker stack = One elasticsearch cluster including one Kibana node for monitoring and managment
 
 ## env directory
-Contains environnement files corresponding to -p parameters of dc.sh script 
+Contains environnement files corresponding to the -p parameter of dc.sh script 
 
 
 ## 2 helper scripts
@@ -23,8 +23,8 @@ Directly use docker compose will failed due to missing variables declarations.
 
 	Usage : ./dc.sh -a action -p project_name
 
-	    -a action         : up | stop | down | clean | init | logs | build
-	    -p project_name   : project_name in order to be create relevant .env file
+	    -a action         : up | stop | down | clean | init | logs
+	    -p project_name   : project_name in order to use relevant .env file from env directory
 
 	  Example : ./dc.sh -a up -p minnie
 
@@ -52,12 +52,9 @@ KIBANA_ELASTIC_USER=elastic
 KIBANA_ELASTIC_USER=kibana_system
 
 
-## First startup
+### Before first startup : create self-signed certificates
+$ ./dc.sh -a init
 
-### Optional : reset self-signed certificates
-
-$ rm -rf certs/*
-$ ./dc.sh -a init -p <env>
 
 ### Start
 $ ./dc.sh -a up -p <env>
